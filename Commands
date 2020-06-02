@@ -1,0 +1,60 @@
+-	Confirmation of VM on V-Center: 
+Get-VM -Name ${host}|ft
+
+-	Script to find SCSI ID: 
+var disk = volume_name;
+if (disk == 'C')
+{
+scsi_id = "0:0";
+}
+else if (disk == 'D')
+{
+scsi_id = "1:0";
+}
+else if (disk == 'E')
+{
+scsi_id = "2:0";
+}
+else if (disk == 'F')
+{
+scsi_id = "3:0";
+}
+else if (disk == 'G')
+{
+scsi_id = "1:1";
+}
+else if (disk == 'H')
+{
+scsi_id = "2:1";
+}
+else if (disk == 'I')
+{
+scsi_id = "3:1";
+}
+else
+{
+scsi_id = "NOT FOUND";
+}
+
+scsi_id
+
+-	Get HD Name:
+$DiskInfo= @();foreach($VMview in Get-VM ${host}|Get-View){foreach($VirtualSCSIController in ($VMView.Config.Hardware.Device|where {$_.DeviceInfo.Label -match "SCSI Controller"})){foreach ($VirtualDiskDevice in ($VMView.Config.Hardware.Device | where {$_.ControllerKey -eq $VirtualSCSIController.Key})){$VirtualDisk = ""|Select VMname, DiskName, SCSI_ID;$VirtualDisk.VMname = $VMview.Name;$VirtualDisk.DiskName = $VirtualDiskDevice.DeviceInfo.Label;$VirtualDisk.SCSI_ID = "$($VirtualSCSIController.BusNumber):$($VirtualDiskDevice.UnitNumber)";$DiskInfo += $VirtualDisk}}};$DiskInfo | Where-Object {$_.SCSI_ID -eq '$scsi_id'} |select DiskName|ft -h
+
+-	Get DataStore:
+Get-Datastore|where{$_.Name -notlike "*local*"}|Select @{N="DataStoreName";E={$_.Name}},@{N="Percentage Free Space(%)";E={[math]::Round(($_.FreeSpaceGB)/($_.CapacityGB)*100,2)}}|Where {$_."Percentage Free Space(%)" -gt 20}|ft
+
+-	Get Hard Disk Name:
+Get-HardDisk -vm ${host} -name "Hard disk 1"|select CapacityGB|ft -h
+
+-	Set Hard Disk:
+Get-HardDisk -vm ${host} | Where {$_.Name -eq "${hd_name}"} | Set-HardDisk -CapacityGB ${hd_inc} -confirm:0
+
+-	Get PageFile:
+Get-WmiObject Win32_PageFileusage | Select-Object Name|ft -h
+
+-	Diskpart Extend:
+select volume=${volume_name}","extend"|diskpart
+
+-	List Volume:
+"list volume"|diskpart
