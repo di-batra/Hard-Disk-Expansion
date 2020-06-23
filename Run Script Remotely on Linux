@@ -1,0 +1,6 @@
+#set -x
+date1=`date`
+for server in $(cat /tmp/servers.txt);
+do
+sshpass -p 'Password' ssh User_ID@${server} 'bash -s' < /tmp/main_task.sh &> /tmp/${server}_$(date +%Y%m%d).txt;
+done
