@@ -1,0 +1,173 @@
+echo"
+Steps to be followed for running this script:
+ 
+•	The script creates a new directory on the server under /var directory.
+•	It further creates a file with the validation script in the directory created in the previous step.
+•	The script will run to store pre-hardening logs on the server if the logs are not present already.
+•	It then asks for confirmation whether hardening has been run or not. Please enter ‘no’ at this point. 
+•	If entered ‘no’, the script will exit. Team can proceed with the hardening activity. 
+•	After completing the hardening activity, you can run the script again to get the comparison results. 
+•	At the second run of the script, enter ‘yes’. This will create post-hardening logs file and compare both the files to store result in a new file. 
+•	The results and the log file is shared over email as well as would be present on the server for your reference.
+
+Please note the script is to be run only twice with exact inputs of ‘no’ first and ‘yes’ second for correct results."
+
+##################################################################
+##           Copying Validation Script on the server 		##
+##################################################################
+mkdir /var/Validation-Script 
+chmod 777 /var/Validation-Script
+mkdir /var/Validation-Script/Logs
+
+cat << 'EOF' > /var/Validation-Script/validation_scr_ver6.sh 
+#!/bin/bash
+ls -lrt  /root/cis /boot/grub/grub.conf /etc/grup.conf /etc/motd /etc/init.d/nfs /etc/init.d/rpcbind /etc/crontab /etc/cron.daily /etc/cron.hourly 
+/etc/cron.weekly /etc/cron.monthly /etc/cron.d /etc/cron.allow /etc/at.allow /etc/cron.deny /etc/at.deny /etc/group /etc/gshadow /etc/passwd 
+/etc/shadow /etc/security/pwquality.conf /etc/pam.d/system-auth /etc/pam.d/password-auth /etc/login.defs-preCIS /etc/login.defs /etc/login.defs 
+/etc/ssh/sshd_config-preCIS /etc/ssh/sshd_config /etc/profile-preCIS 
+echo "cat /root/cis-----------------------------------------------------
+"
+cat /root/cis
+echo "/boot/grub/grub.conf-----------------------------------------------------
+"
+cat /boot/grub/grub.conf
+echo "/etc/grup.conf-----------------------------------------------------
+"
+cat /etc/grup.conf
+echo "rpm -qa | grep prelink-----------------------------------------------------
+"
+rpm -qa | grep prelink
+echo "cat /etc/motd-----------------------------------------------------
+"
+cat /etc/motd
+echo "cat /etc/init.d/nfs-----------------------------------------------------
+"
+cat /etc/init.d/nfs
+echo "cat /etc/init.d/rpcbind-----------------------------------------------------
+"
+cat /etc/init.d/rpcbind
+echo "rpm -qa | grep -qw  tcp_wrappers-----------------------------------------------------
+"
+rpm -qa | grep -qw  tcp_wrappers
+echo "rpm -qa | grep ypbind-----------------------------------------------------
+"
+rpm -qa | grep ypbind
+echo "cat /etc/crontab-----------------------------------------------------
+"
+cat /etc/crontab
+echo "cat /etc/cron.daily-----------------------------------------------------
+"
+cat /etc/cron.daily
+echo "cat /etc/cron.hourly-----------------------------------------------------
+"
+cat /etc/cron.hourly 
+echo "cat /etc/cron.weekly-----------------------------------------------------
+"
+cat /etc/cron.weekly
+echo "cat /etc/cron.monthly-----------------------------------------------------
+"
+cat /etc/cron.monthly
+echo "cat /etc/cron.d-----------------------------------------------------
+"
+cat /etc/cron.d
+echo "cat /etc/cron.allow-----------------------------------------------------
+"
+cat /etc/cron.allow 
+echo "cat /etc/at.allow-----------------------------------------------------
+"
+cat /etc/at.allow
+echo "cat /etc/cron.deny-----------------------------------------------------
+"
+cat /etc/cron.deny 
+echo "cat /etc/at.deny-----------------------------------------------------
+"
+cat /etc/at.deny
+echo "/etc/security/pwquality.conf-----------------------------------------------------
+"
+cat /etc/security/pwquality.conf
+echo "cat /etc/pam.d/system-auth-----------------------------------------------------
+"
+cat /etc/pam.d/system-auth
+echo "cat /etc/pam.d/password-auth-----------------------------------------------------
+"
+cat /etc/pam.d/password-auth
+echo "-----------------------------------------------------
+"
+echo $pam_env.so
+echo $pam_faillock.so
+echo $pam_unix.so
+echo $pam_faillock.so
+echo $pam_succeed_if.so
+echo $pam_deny.so
+echo $pam_unix.so
+echo $pam_faillock.so
+echo $pam_faillock.so
+echo $pam_unix.so
+echo $pam_localuser.so
+echo $pam_succeed_if.so
+echo $pam_permit.so
+echo $pam_pwquality.so
+echo $pam_unix.so
+echo $pam_deny.so
+echo $pam_keyinit.so
+echo $pam_limits.so
+
+ echo "cat /etc/login.defs-preCIS-----------------------------------------------------
+"
+cat /etc/login.defs-preCIS
+echo "cat /etc/login.defs-----------------------------------------------------
+"
+cat /etc/login.defs
+echo "cat /etc/ssh/sshd_config-preCIS-----------------------------------------------------
+"
+cat /etc/ssh/sshd_config-preCIS
+echo "cat /etc/ssh/sshd_config-----------------------------------------------------
+"
+cat /etc/ssh/sshd_config 
+EOF
+
+chmod 777 /var/Validation-Script/validation_scr_ver6.sh
+
+##########################################################
+##		    Comparison Script		          			##
+##########################################################
+if [[ -f /var/Validation-Script/before_hardening_validation_v6.log ]];
+then
+	echo "Pre-Hardening Validation File already exists."
+else
+	echo "This script has not found any Pre-Hardening Validation logs on the server hence it is now running the Validation Script.
+The Logs have been recorded in /var/Validation-Script/before_hardening_validation_v6.log"
+	#d1=`date "+%F-%T"`
+	sh /var/Validation-Script/validation_scr_ver6.sh > /var/Validation-Script/before_hardening_validation_v6.log
+fi
+
+echo "Please confirm if comparison should be done between Pre-Hardening and Post-Hardening logs. 
+Have you run the Hardening Script?(yes/no)"
+read ans
+case "$ans" in 
+yes)
+	if [[ -f /var/Validation-Script/before_hardening_validation_v6.log ]];
+	then
+		#d2=`date "+%F-%T"`
+		sh /var/Validation-Script/validation_scr_ver6.sh > /var/Validation-Script/after_hardening_validation_v6.log 
+		echo "Comparing before and after log files"
+		diff -yw  --suppress-common-lines  before_hardening_validation_v6.log after_hardening_validation_v6.log>Validation-Script/Comparison_file.txt
+		echo "Please check your mail box for results."
+	fi
+;;
+no)
+	echo "Comparison Script will not be run since the hardening has been run on the server."
+;;
+*)
+	echo "Please enter yes or no."
+;;
+esac
+
+echo "Hi Team 
+Please find the results of Hardening Validation Script attached."| mail -s "Hardening Validation Results" -a "/var/Validation-Script/before_hardening_validation_v6.log" "/var/Validation-Script/after_hardening_validation_v6.log" "/var/Validation-Script/Comparison_file.txt" email_id@abc.com
+
+echo "The log files and the comparison file are present in /var/Validation-Script/Logs directory." 
+cp /var/Validation-Script/before_hardening_validation_v6.log /var/Validation-Script/Logs
+cp /var/Validation-Script/after_hardening_validation_v6.log /var/Validation-Script/Logs
+cp /var/Validation-Script/Comparison_file.txt /var/Validation-Script/Logs
+rm -f /var/Validation-Script/before_hardening_validation_v6.log /var/Validation-Script/after_hardening_validation_v6.log validation_scr_ver6.sh /var/Validation-Script/Comparison_file.txt
