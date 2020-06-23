@@ -1,0 +1,243 @@
+#!/bin/bash
+~/ .profile
+Date=`date +"%d-%m-%Y"`
+cd /tmp 
+touch New_Server_Data_$Date.log
+chmod 777 /tmp/New_Server_Data_$Date.log
+Log_file="/tmp/New_Server_Data_"$Date".log"
+echo $Log_file
+#touch Server_Data_Error_$Date.log
+#chmod 777 /tmp/Server_Data_Error_$Date.log
+#Error_log="/tmp/Server_Data_Error_"$Date".log"
+#echo $Error_log
+echo -e "\nScript executed at:"  `date` | tee $Log_file
+
+#Step 5 To check the flavor of OS
+
+echo  -e "\n\033[4mFlavour of linux running on the machine\033[0m" | tee -a $Log_file
+grep -E 'Oracle Linux Server|Red Hat Enterprise Linux|Debian' /etc/*release | grep NAME | tee -a $Log_file
+
+echo -e "\n Checking the subscription details of the machine" | tee -a $Log_file
+echo -e " Please provide the password when prompted:\n" 
+subscription-manager list | tee -a $Log_file |grep -i status 
+ret1=$?
+if [ $ret1 -ne 0 ]; then
+	echo -e "Error in command, Can't get Subscription Details\n" 
+fi | tee -a $Log_file
+
+#Step 6
+echo -e "\033[4mPartition details of the disk:\033[0m" | tee -a $Log_file
+    
+ret=`df -hT|awk '$1~/mapper/ {print}'|wc -l`
+	if [ $ret -gt 0 ]; then
+		echo "The OS has a LVM Patitioned File System."	
+		df -hT|awk '$1~/mapper/ {print}'
+	elif [ $ret -eq 0 ];  then
+		echo "The OS has a Standard Partiotioned File System." 
+	else
+		echo " \n" 
+	fi | tee -a $Log_file
+
+#Step 7
+
+echo -e "\n\033[4mChecking the DNS details:\033[0m" | tee -a $Log_file
+grep nameserver /etc/resolv.conf | tee -a $Log_file
+
+#Step 8 
+echo -e "\n\033[4mChecking for IPAddress configuration:\033[0m" | tee -a $Log_file
+
+cd /etc/sysconfig/network-scripts;
+if [ -r ifcfg-eth* ]; then
+	cat ifcfg-eth*;
+else 
+	echo "/etc/sysconfig/network-scripts/ifcfg-eth* file does not exist."
+fi | tee -a $Log_file
+	
+#Step 9 
+
+echo -e "\n\033[4mIPV6 Addressing:\033[0m" | tee -a $Log_file
+
+cd /etc/sysconfig/network-scripts/;
+if [ -r ifcfg-eth* ]; then
+	cat ifcfg-eth*;
+	echo "Please check for IPV6INIT in the above file content."
+fi 	
+else 
+	echo "/etc/sysconfig/network-scripts/ifcfg-eth* does not exist." 
+fi | tee -a $Log_file
+		
+#Step 10 
+
+echo -e "\n\033[4mUMASK Value:\033[0m" | tee -a $Log_file
+echo "umask value: " `umask` | tee -a $Log_file
+$umask=`umask` 
+if [ $umask -eq null ]; then 
+echo "umask value required to be set" 
+fi | tee -a $Log_file
+
+#Step 11
+
+echo -e "\n\033[4mAlt+ctrl+Delete Functionality:\033[0m" | tee -a $Log_file
+cd /etc/init;
+if [ -r control-alt-delete.conf]; then
+	echo "/etc/init/control-alt-delete.conf file exists."
+else
+	echo "File etc/init/control-alt-delete.conf does not exist. Touching the file in current path." 
+	ls -lrt control-alt-delete.conf 
+fi | tee -a $Log_file
+
+#Step 12
+
+echo -e "\n\033[4mLimit root access using SUDO:\033[0m" | tee -a $Log_file
+cd /etc/ssh;
+grep PermitRoot sshd_config | grep -v "^#" | tee -a $Log_file
+ret4=$?
+
+if [ $ret4 -eq 0 ]; then
+echo "Root login is not disabled for the user" 
+fi| tee -a $Log_file
+
+#Step 13
+
+echo -e "\n\033[4mCron file details:\033[0m" | tee -a $Log_file
+
+if [ -r /etc/cron.allow ]; then
+	echo "Cron file exists." 
+	cat /etc/cron.allow
+else 
+	echo "Cron File does not exist." 
+fi | tee -a $Log_file
+
+#Step 14
+
+echo -e "\n\033[4mWarning Banners:\033[0m" | tee -a $Log_file
+cd /etc
+banners=`cat motd|wc -l` 
+if [ $banners -eq 0 ]; then
+	echo "Banners are not configured" 
+	cat /etc/motd
+elif [ $banners -gt 0 ]; then
+	echo "Banners are configured." 
+	cat /etc/motd 
+else
+	echo " "
+fi | tee -a $Log_file
+
+#Step 15
+
+echo -e "\n\033[4mMount points and /etc/fstab consistency:\033[0m" | tee -a $Log_file
+cd /etc
+cat fstab|awk '{print $1}' |sort -u > file3
+df -h|awk '{print $1}'|sort -u >file4
+echo "Common file systems:" | tee -a $Log_file
+comm -12 file3 file4 | tee -a $Log_file
+comm1=`comm -12 file3 file4|wc -l`
+if [ $comm1 -eq 0 ]; then
+	echo "No common file systems found." 
+fi | tee -a $Log_file
+
+#Step 16 
+echo -e "\n\033[4mServer Uptime, Network configuration and route consistency:\033[0m" | tee -a $Log_file
+echo -e "\nuptime: " `uptime`  | tee -a $Log_file
+echo -e "\nifconfig: " `ifconfig -a`  | tee -a $Log_file
+echo -e "\nnetstat: " `netstat -nr` | tee -a $Log_file
+
+#Step 17
+echo -e "\n\033[4mLogrotate configuration:\033[0m" | tee -a $Log_file
+ls -lrt /etc/logrotate.d/| awk '{print $9}'|sort -u >file1 
+ls -lrt /var/log | awk '{print $9}' |sort -u >file2
+echo "Common File Systems:" | tee -a $Log_file
+comm -12 file1 file2 | tee -a $Log_file
+comm2=`comm -12 file3 file4|wc -l`
+if [ $comm2 -eq 0 ]; then
+	echo "No common file systems found." 
+fi | tee -a $Log_file
+
+#Step 18
+
+echo -e "\n\033[4mChecking sudo access\033[0m" | tee -a $Log_file
+if [ -f /etc/sudoers ]; then
+	Var9=`cat /etc/sudoers | grep -i ALL | grep -v "^#" | egrep -v "root|Defaults"`
+	if [ $Var9 -eq null ]; then
+		echo "Sudo access not configured" 
+	elif [ $Var9 -gt null ]; then
+		echo "Sudo access is configured" 
+	else
+		echo " "
+	fi 
+else
+	echo "/etc/sudoers file does not exist." 
+fi | tee -a $Log_file
+#Step 19
+
+echo -e "\n\033[4mNTP client configuration:\033[0m" | tee -a $Log_file
+echo -e "\nNTP:" `ntpq -p`  | tee -a $Log_file 
+echo -e "\n /etc/postfix/main.cf:" `cat /etc/postfix/main.cf  | grep -v "^#"` | tee -a $Log_file
+
+#Step 20
+
+echo -e "\n\033[4mSELINUX status:\033[0m" | tee -a $Log_file
+cd /etc/selinux/;
+if [ -r config ]; then
+	echo "`grep SELINUX config | grep -v "^#"`"
+else 
+	echo "/etc/selinux/config File does not exist." 
+fi | tee -a $Log_file
+
+#Step 21
+
+echo -e "\n\033[4mChecking Sar history:\033[0m" | tee -a $Log_file
+cd /var/log/sa;
+Var10=`ls -lrt sa* | wc -l`
+
+if [ $Var10 -ne null ]; then
+	echo "Sar History status enabled"
+else 
+	echo "Sar History status not enabled" 
+fi | tee -a $Log_file
+
+#Step 22
+
+echo -e "\n\033[4mKdump status:\033[0m" | tee -a $Log_file
+
+service kdump status | tee -a $Log_file
+
+#Step 23
+
+echo -e "\n\033[4mFirewall status:\033[0m" | tee -a $Log_file
+
+service iptables status | tee -a $Log_file
+
+#Step 24
+
+echo -e "\n\033[4mAudit status:\033[0m" | tee -a $Log_file
+
+service auditd status | tee -a $Log_file
+
+#Step 25
+
+echo -e "\n\033[4mMultipathing details:\033[0m" | tee -a $Log_file
+
+multipath -ll | tee -a $Log_file
+
+#Step 26
+
+echo -e "\n\033[4mNFS details:\033[0m" | tee -a $Log_file
+
+df -hT | tee -a $Log_file
+cat /etc/exports | tee -a $Log_file
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
