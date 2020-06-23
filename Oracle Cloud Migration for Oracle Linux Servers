@@ -25,7 +25,7 @@ ls -lrt
 
 echo "
 ***Changing DNS Settings***"
-echo "search nparterra.net
+echo "search dummy.net
 nameserver 10.xx.xx.xx" >/etc/resolv.conf           #Updating the resolv.conf file with the IPAddress of the new AD.
 
 chattr +i /etc/resolv.conf                          #Making resolv.conf uneditable
@@ -56,11 +56,11 @@ echo "Password" |realm join Domain_name -v -U UserID            #Joining to the 
 # Creating sssd.conf file
 	echo "
 	[sssd]
-	domains = nparterra.net
+	domains = dummy.net
 	config_file_version = 2
 	services = nss, pam
 
-	[domain/nparterra.net]
+	[domain/dummy.net]
 	ad_domain = *******
 	krb5_realm = *******
 	realmd_tags = manages-system joined-with-samba
