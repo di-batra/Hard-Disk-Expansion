@@ -1,0 +1,88 @@
+# This code is for switching the DNS from IPAddress of one Active Directory to IPAddress of the AD outside of the bubble
+
+echo "
+***Uninstalling Trendmicro***"
+var1=`rpm -qa | grep -i ds_agent`                    #Uninstalling Trend Micro
+sudo rpm -e $var1
+
+set -e                                               #Exit on the first error
+sudo -s <<EOF                                        #Enter as root in a new shell. This is required bcz the following commands need root access for execution.
+echo "
+***Root Access***"
+id
+
+echo "
+***Backup all configuration files in /tmp/Backup_OCI_migration***"
+mkdir -m777 /tmp/Backup_OCI_migration
+cd /tmp/Backup_OCI_migration
+cp /etc/resolv.conf /tmp/Backup_OCI_migration
+cp /etc/sssd/sssd.conf /tmp/Backup_OCI_migration
+cp -a /var/lib/sss/db/* /tmp/Backup_OCI_migration
+	
+echo "
+***Contents of /tmp/Backup_OCI_migration***"
+ls -lrt
+
+echo "
+***Changing DNS Settings***"
+echo "search nparterra.net
+nameserver 10.xx.xx.xx" >/etc/resolv.conf           #Updating the resolv.conf file with the IPAddress of the new AD.
+
+chattr +i /etc/resolv.conf                          #Making resolv.conf uneditable
+lsattr /etc/resolv.conf
+	
+echo "
+***Contents of /etc/resolv.conf***"
+cat /etc/resolv.conf
+	
+echo "
+***Ping AD DNS***"
+ping -c 3 10.XX.XX.XX 
+
+echo "
+***Stoping the SSSD service and clear the SSSD cache***"
+echo "Password" |realm leave --user=UserID Domain_name          #Leaving the current realm
+
+systemctl stop sssd                                             #Stopping System Security Services Daemon
+
+cd /var/lib/sss/db                                              #Clearing Cache
+rm -rf *
+	
+echo "
+***Removed the OCI server from domain and rejoin***"
+> /etc/sssd/sssd.conf
+echo "Password" |realm join Domain_name -v -U UserID            #Joining to the new realm
+
+# Creating sssd.conf file
+	echo "
+	[sssd]
+	domains = nparterra.net
+	config_file_version = 2
+	services = nss, pam
+
+	[domain/nparterra.net]
+	ad_domain = *******
+	krb5_realm = *******
+	realmd_tags = manages-system joined-with-samba
+	cache_credentials = True
+	id_provider = ad
+	krb5_store_password_if_offline = True
+	default_shell = /bin/bash
+	ldap_id_mapping = False
+	ad_gpo_ignore_unreadable = True
+	use_fully_qualified_names = False
+	fallback_homedir = /home/%u@%d
+	access_provider = ad" >/etc/sssd/sssd.conf                    #Creating sssd.conf with the correct entries cz in some cases it is not generated correctly.
+
+echo "
+***Viewing contents of sssd.conf***"
+cat /etc/sssd/sssd.conf
+
+echo "
+***Start the SSSD service***"
+systemctl start sssd                                            #Starting sssd.conf
+
+sudo reboot                                                     #Rebooting to makng changes come to effect
+EOF
+
+
