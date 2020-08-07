@@ -1,0 +1,16 @@
+1.	Problem Statement
+
+The automata runs at the start of every month to get details of the root users and local users of every Linux server. This detail is collated in an excel and sent to the Unix team.
+
+2.	Current SOP
+1.	The automata is triggered at the start of every month to collect details of root users and local users.  
+2.	The workflow is scheduled in Calender and is triggered automatically. 
+3.	It connects to the servers one by one and takes the detail.
+4.	It calculates the list of sudoers groups. 
+5.	After getting the list, it gets the user details of each of the sudoers group and stores it in a file.
+6.	After this is done, it gets details of sudo root users and stores it in a variable.
+7.	It then gets details of the users in ADMIN and stores it in a variable. 
+8.	Once, all these three activities are completed, the control connects to the jump server to input the detail in the excel file. This is done with the help of a python script.
+9.	The python script is triggered with the three sets of details collected in the above steps. 
+10.	Once the data for a host is input in the excel file, the control moves to the next host and the same steps are repeated.
+
