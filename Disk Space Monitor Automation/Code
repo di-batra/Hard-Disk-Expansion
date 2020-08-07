@@ -1,0 +1,102 @@
+#This task was implemented on 7 servers each having a few different mount points with different threshold requirements.
+
+#Server1
+ 
+df -k | egrep -iv 'Mounted'| awk '{if ( $6 == "/backup" && $5 > "95" ) print "MOUNT "$6" IS ALMOST OUT OF SPACE, CURRENT PERCENTAGE "$5;else if ( $5 > "90" && $6 != "/backup" ) print "MOUNT "$6" IS ALMOST OUT OF SPACE, CURRENT PERCENTAGE "$5;
+else a=b}' > /home/automata/test
+ 
+Skip mounts: None
+Thresholds: 
+/backup --> 95
+General Threshold --> 90
+ 
+#Server2
+ 
+df -k | egrep -iv 'Mounted|/gers/prod/dump1'| awk '{if ( $6 == "/u03" && $5 > "95" ) print "MOUNT "$6" IS ALMOST OUT OF SPACE, CURRENT PERCENTAGE "$5;
+else if ( $5 > "95" && $6 == "/u05" ) print  "MOUNT "$6" IS ALMOST OUT OF SPACE, CURRENT PERCENTAGE  "$5;
+else if ( $5 > "90" && $6 != "/u03" && $6 != "/u05" ) print  "MOUNT "$6" IS ALMOST OUT OF SPACE, CURRENT PERCENTAGE  "$5;
+else a=b}' > /home/automata/test
+ 
+Skip mounts: /gers/prod/dump1 (Newly added)
+Thresholds: 
+/u03 --> 95
+/u05 --> 95
+General Threshold --> 90
+ 
+#Server3
+    
+bdf | egrep -iv 'Mounted'| awk '{if ( $5 > "90" && $6 != "/vgstand/var" ) print  "MOUNT "$6" IS ALMOST OUT OF SPACE, CURRENT PERCENTAGE "$5;
+else a=b}' > /home/automata/test
+ 
+Skip mounts:  
+Thresholds: 
+General Threshold --> 90
+Remove:
+/vgstand/var
+ 
+#Server4
+ 
+bdf | egrep -vw 'Mounted|9%|8%|7%|6%|5%|4%'| awk '$5>"90" {print "MOUNT "$6" IS ALMOST OUT OF SPACE, CURRENTLY "$5 }'> /tmp/test
+ 
+Skip mounts: None 
+Thresholds: 
+General Threshold --> 90
+ 
+#Server5
+ 
+bdf | egrep -vw 'Mounted|9%|8%|7%|6%|5%|4%'| awk '$5>"90" {print "MOUNT "$6" IS ALMOST OUT OF SPACE, CURRENT PERCENTAGE "$5 }'
+ 
+Skip mounts: 
+None
+Thresholds: 
+General Threshold --> 90
+Removed:
+/opt/BESclient
+/var/opt/BESclient
+ 
+#Server6
+ 
+bdf | grep %|grep -Ev 'Mounted|/devl/OD24'|awk '{if ( $6 == "/u10" && $5 > "95" ) print "MOUNT "$6" IS ALMOST OUT OF SPACE, CURRENT PERCENTAGE "$5 ;
+else if ( $5 > "95" && $6 == "/u11" ) print  "MOUNT "$6" IS ALMOST OUT OF SPACE, CURRENT PERCENTAGE  "$5;
+else if ( $5 > "96" && $6 == "/u13" ) print  "MOUNT "$6" IS ALMOST OUT OF SPACE, CURRENT PERCENTAGE  "$5;
+else if ( $5 > "97" && $6 == "/u15" ) print  "MOUNT "$6" IS ALMOST OUT OF SPACE, CURRENT PERCENTAGE  "$5;
+else if ( $5 > "90" && $6 != "/u11" && $6 != "/u10" && $6 != "/u13" && $6 != "/u15") print  "MOUNT "$6" IS ALMOST OUT OF SPACE, CURRENT PERCENTAGE  "$5;
+else a=b}' > /home/automata/test
+ 
+Skip mounts: 
+ 
+/devl/OD24
+Thresholds: 
+/u10 - 95%
+/u11 - 95%
+/u13 - 96%
+/u15 - 97%
+General Threshold --> 90
+Removed:
+/backup05
+ 
+#Server7
+ 
+bdf | grep -Ev 'Mounted|/prod/OP01/data01|/prod/OP01/data02|/prod/OP01/indx02|/prod/OP01/redo01|/prod/OP01/redo02' |awk '{if ( $6 == "/prod/OP01/indx01" && $5 > "95" ) print "MOUNT "$6" IS ALMOST OUT OF SPACE, CURRENT PERCENTAGE  "$5 ;
+else if ( $5 > "97" && $6 != "/prod/OP01/indx03" ) print  "MOUNT "$6" IS ALMOST OUT OF SPACE, CURRENT PERCENTAGE "$5;
+else if ( $5 > "90" && $6 != "/prod/OP01/indx03" && $6 != "/prod/OP01/indx01") print  "MOUNT "$6" IS ALMOST OUT OF SPACE, CURRENT PERCENTAGE  "$5;
+else a=b}' > /home/automata/test
+ 
+Skip mounts: 
+/prod/OP01/data01
+/prod/OP01/data02
+/prod/OP01/indx02
+/prod/OP01/redo01
+/prod/OP01/redo02
+ 
+Thresholds:
+/prod/OP01/indx01 - 95%
+/prod/OP01/indx03 - 97%
+General Threshold --> 90
+ 
+Removed:
+/opt/BESclient
+/var/opt/BESclient
+ 
+ 
+
