@@ -1,0 +1,56 @@
+1.	Hostname: 
+uname -a
+
+2.	Date:
+date "+%d-%m-%Y"
+
+3.	List all sudoers group
+sudo su;cd /etc/sudoers.d/;ls -1
+
+4.   Get user details of the group
+      getent group “group_name”
+
+5.   Get sudo root users:
+	   cat /etc/sudoers | grep -v ^# | grep -i ALL
+
+6.   Users in ADMINS:
+	   cat /etc/group | grep -i ADMINS
+
+7.   Python Script:
+		
+from openpyxl import load_workbook
+import getopt, sys
+from openpyxl.styles import PatternFill, Color
+
+wb = load_workbook(filename="/tmp/groups.xlsx")
+s = wb.active
+
+row_num = int(sys.argv[1])
+host = str(sys.argv[2])
+sudoers = str(sys.argv[4])
+local_acc = str(sys.argv[3])
+sudo_root_users = str(sys.argv[5])
+
+a1 = s.cell(row = row_num, column = 1)
+a1.value = host
+a1.fill = PatternFill(start_color="FFC7CE", fill_type = "solid")
+a2 = s.cell(row = row_num, column = 2)
+a2.value = local_acc
+a2.fill = PatternFill(start_color="FFC7CE", fill_type = "solid")
+a3 = s.cell(row = row_num, column = 3)
+a3.value = sudoers
+a3.fill = PatternFill(start_color="FFC7CE", fill_type = "solid")
+a4 = s.cell(row = row_num, column = 4)
+a4.value = sudo_root_users
+a4.fill = PatternFill(start_color="FFC7CE", fill_type = "solid")
+
+for row in ws.iter_rows():
+    for cell in row:
+        cell.alignment =  cell.alignment.copy(wrapText=True)
+
+wb.save('/tmp/groups.xlsx')
+
+8. Send email:
+
+mailx -a /tmp/groups.xlsx -s "User Group details" -r "someone@mailer.com" -S smtp="smtp.XXXXXXX" someone@mail.com
+
