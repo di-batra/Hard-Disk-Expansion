@@ -1,1 +1,26 @@
-a
+#This code deletes snapshots two days older than the current date. This code was a part of an automation tool but can be used in a script too. 
+
+###Connect to V-Center server
+Connect-VIServer ${VC_IP} -User '${VC_username}' -Password '${VC_password}' -Force; 
+
+###Get Snapshots Older than 2days
+Get-VM|Get-Snapshot|Where{($_.Created -lt (Get-Date).AddDays(-${days}))}|select vm,name,created|ft
+
+###If the above command returns output then get the VM names for deleting the Snapshots, else move to the next VM.
+Get-VM|Get-Snapshot|Where{($_.Created -lt (Get-Date).AddDays(-${days}))}|select vm|ft -h
+
+###Get the number of VMs found from previous command into a variable and display
+var str = vm_names.split('\n');
+var length = str.length;
+"VM Count : "+ length;
+
+###Get VM Name
+var cnt = counter;
+var str = vm_names;
+var array = str.split('\n');
+vm_name = array[cnt].trim();
+
+###Delete Snapshot for First VM
+Get-Snapshot -vm ${vm_name} | Where{($_.Created -lt (Get-Date).AddDays(-${days}))} |Remove-Snapshot -Confirm:0
+
+###Repeat the same steps for the next VM or create a loop.
