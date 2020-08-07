@@ -1,0 +1,16 @@
+1.	Problem Statement:
+As the snapshots of VM accumulate in the V-Center, it causes space issues. This automata deletes all snapshots older than 2days from the current date and which start with the string ‘RFC’.
+
+
+Current SOP
+1.	Connect each V-center and get VMs
+2.	Fetch the Snapshot details of each VM by filtering (RFC*)
+3.	Check the snapshot is older than 2 days .
+4.	If the snapshot is older than 2 days , delete it .
+5.	Else, no action required . Check next VM 
+6.	Repeate the steps from 2-5 util all VMs completed.
+
+
+
+ 
+
